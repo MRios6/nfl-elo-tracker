@@ -1,171 +1,463 @@
-const K_OVERALL = 20;
-const K_STAT = 15;
-const HFA = 48; // Home Field Advantage
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL Elo Tracker & Matchup Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #161b22;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+        .card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #58a6ff 0%, #1f6feb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-panel {
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-10 flex flex-col items-center">
 
-let teamData = {};
+    <!-- App Header -->
+    <header class="w-full max-w-2xl sticky top-0 z-50 glass-panel px-4 py-3 mb-4 flex items-center justify-between border-b border-gray-800 shadow-lg">
+        <div class="flex items-center space-x-2">
+            <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-white text-lg shadow-md shadow-blue-500/20">
+                🏈
+            </div>
+            <div>
+                <h1 class="text-base font-bold text-white leading-none">NFL Elo Engine</h1>
+                <p class="text-xs text-gray-400 mt-0.5">Automated Stats & Predictor</p>
+            </div>
+        </div>
+        <div id="seasonYearBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-900/40 text-blue-400 border border-blue-800/50">
+            Regular Season
+        </div>
+    </header>
 
-function resetTeamData() {
-    teamData = {};
-}
+    <main class="w-full max-w-2xl px-4 space-y-4">
 
-function initTeam(abbr) {
-    if (!teamData[abbr]) {
-        teamData[abbr] = { overall: 1500, off: 1500, def: 1500, home: 1500, away: 1500 };
-    }
-}
+        <!-- Controls & Sync Card -->
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 card-shadow">
+            <div class="flex flex-col space-y-3">
+                <button id="syncBtn" onclick="fetchFullSeasonGames()" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-blue-900/30 transition-all duration-200 flex items-center justify-center space-x-2">
+                    <svg id="syncIcon" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span id="syncBtnText">Sync Season Boxscores (Weeks 1-18)</span>
+                </button>
+                
+                <!-- Progress Bar Container -->
+                <div id="progressContainer" class="hidden space-y-1.5">
+                    <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
 
-async function fetchFullSeasonGames() {
-    const statusEl = document.getElementById('status');
-    statusEl.innerText = "Processing full season (Weeks 1 to 18)...";
-    
-    // Reset Elos to 1500 base before recalculating full history
-    resetTeamData();
+                <div class="flex justify-between items-center text-xs text-gray-400 pt-1">
+                    <span id="statusText">Status: Ready to calculate</span>
+                    <span id="lastUpdated" class="text-gray-500">Not synced yet</span>
+                </div>
+            </div>
+        </section>
 
-    const TOTAL_WEEKS = 18;
-    let totalProcessed = 0;
+        <!-- Matchup Predictor Card -->
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 card-shadow">
+            <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider mb-3 flex items-center space-x-2">
+                <span>⚔️</span>
+                <span>Matchup Predictor</span>
+            </h2>
 
-    try {
-        for (let week = 1; week <= TOTAL_WEEKS; week++) {
-            statusEl.innerText = `Fetching Week ${week} of 18...`;
-            
-            // Query ESPN API for each specific week
-            const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`);
-            const data = await response.json();
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label for="homeSelect" class="block text-xs font-semibold text-gray-400 mb-1">HOME TEAM</label>
+                    <select id="homeSelect" onchange="calculatePrediction()" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-blue-500">
+                        <option value="">Select Home</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="awaySelect" class="block text-xs font-semibold text-gray-400 mb-1">AWAY TEAM</label>
+                    <select id="awaySelect" onchange="calculatePrediction()" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-blue-500">
+                        <option value="">Select Away</option>
+                    </select>
+                </div>
+            </div>
 
-            if (data.events) {
-                data.events.forEach(event => {
-                    const comp = event.competitions[0];
-                    // Only process games that are finished
-                    if (comp.status.type.completed) {
-                        const home = comp.competitors.find(c => c.homeAway === 'home');
-                        const away = comp.competitors.find(c => c.homeAway === 'away');
-                        processGame(home, away);
-                        totalProcessed++;
-                    }
-                });
+            <!-- Prediction Output Area -->
+            <div id="predictionBox" class="bg-gray-950/80 border border-gray-800 rounded-xl p-4 text-center">
+                <p class="text-xs text-gray-500">Select two teams to generate linear Elo predictions.</p>
+            </div>
+        </section>
+
+        <!-- Team Ratings Table Card -->
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-4 card-shadow">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-bold text-gray-200 uppercase tracking-wider flex items-center space-x-2">
+                    <span>📊</span>
+                    <span>Team Elo Standings</span>
+                </h2>
+                <span id="teamCountBadge" class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md border border-gray-700">0 Teams</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-gray-800">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-gray-800/80 text-gray-400 font-semibold uppercase">
+                        <tr>
+                            <th class="py-2.5 px-3">Team</th>
+                            <th class="py-2.5 px-2 text-center">Overall</th>
+                            <th class="py-2.5 px-2 text-center">Offense</th>
+                            <th class="py-2.5 px-2 text-center">Defense</th>
+                            <th class="py-2.5 px-2 text-center">Home</th>
+                            <th class="py-2.5 px-2 text-center">Away</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eloTableBody" class="divide-y divide-gray-800/60 font-medium">
+                        <tr>
+                            <td colspan="6" class="py-8 text-center text-gray-500">
+                                No Elo data available. Tap "Sync Season Boxscores" above to compute.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Constants & Linear Engine Configuration
+        const K_OVERALL = 20;
+        const K_STAT = 15;
+        const HFA = 48; // Home Field Advantage in Elo points (~2 points on the spread)
+        const TOTAL_SEASON_WEEKS = 18;
+
+        // Team Database Object
+        let teamData = {};
+
+        // Reset Elo store before full re-calculation
+        function resetTeamData() {
+            teamData = {};
+        }
+
+        // Initialize default Elo ratings for a new team
+        function initTeam(abbr, name) {
+            if (!teamData[abbr]) {
+                teamData[abbr] = { 
+                    name: name || abbr,
+                    overall: 1500, 
+                    off: 1500, 
+                    def: 1500, 
+                    home: 1500, 
+                    away: 1500,
+                    gamesPlayed: 0
+                };
             }
         }
 
-        // Save fresh season calculations to LocalStorage
-        localStorage.setItem('nfl_elo_data', JSON.stringify(teamData));
-        renderTable();
-        populateDropdowns();
-        statusEl.innerText = `Done! Processed ${totalProcessed} total season games.`;
-    } catch (err) {
-        statusEl.innerText = "Error fetching full season data.";
-        console.error(err);
-    }
-}
+        // Fetch full season game box scores from ESPN APIs
+        async function fetchFullSeasonGames() {
+            const syncBtn = document.getElementById('syncBtn');
+            const syncBtnText = document.getElementById('syncBtnText');
+            const syncIcon = document.getElementById('syncIcon');
+            const statusText = document.getElementById('statusText');
+            const progressBar = document.getElementById('progressBar');
+            const progressContainer = document.getElementById('progressContainer');
 
-function processGame(home, away) {
-    const hAbbr = home.team.abbreviation;
-    const aAbbr = away.team.abbreviation;
+            // UI Loading state
+            syncBtn.disabled = true;
+            syncBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            syncIcon.classList.add('animate-spin');
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
 
-    initTeam(hAbbr);
-    initTeam(aAbbr);
+            resetTeamData();
+            let totalGamesProcessed = 0;
 
-    const hScore = parseInt(home.score);
-    const aScore = parseInt(away.score);
-    
-    // Extract yards safely from statistics array if available
-    const hYards = parseInt(home.statistics?.find(s => s.name === 'totalYards')?.displayValue || 300);
-    const aYards = parseInt(away.statistics?.find(s => s.name === 'totalYards')?.displayValue || 300);
+            try {
+                for (let week = 1; week <= TOTAL_SEASON_WEEKS; week++) {
+                    const percent = Math.round((week / TOTAL_SEASON_WEEKS) * 100);
+                    progressBar.style.width = `${percent}%`;
+                    statusText.innerText = `Fetching Week ${week} of 18...`;
+                    syncBtnText.innerText = `Processing Week ${week}...`;
 
-    // 1. Overall Elo Calculation
-    const hElo = teamData[hAbbr].overall;
-    const aElo = teamData[aAbbr].overall;
-    const eHome = 1 / (1 + Math.pow(10, (aElo - (hElo + HFA)) / 400));
-    const actualHome = hScore > aScore ? 1 : (hScore === aScore ? 0.5 : 0);
+                    const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`);
+                    if (!response.ok) continue;
 
-    const mov = Math.abs(hScore - aScore);
-    const movMult = Math.log(mov + 1) * (2.2 / ((actualHome === 1 ? hElo - aElo : aElo - hElo) * 0.001 + 2.2));
+                    const data = await response.json();
 
-    teamData[hAbbr].overall = Math.round(hElo + K_OVERALL * movMult * (actualHome - eHome));
-    teamData[aAbbr].overall = Math.round(aElo + K_OVERALL * movMult * ((1 - actualHome) - (1 - eHome)));
+                    if (data.events && Array.isArray(data.events)) {
+                        data.events.forEach(event => {
+                            const comp = event.competitions?.[0];
+                            if (comp && comp.status?.type?.completed) {
+                                const home = comp.competitors.find(c => c.homeAway === 'home');
+                                const away = comp.competitors.find(c => c.homeAway === 'away');
+                                if (home && away) {
+                                    processGame(home, away);
+                                    totalGamesProcessed++;
+                                }
+                            }
+                        });
+                    }
+                }
 
-    // 2. Offense & Defense Rating Adjustment
-    const yardDiff = hYards - aYards;
-    teamData[hAbbr].off += Math.round(K_STAT * (yardDiff / 100));
-    teamData[aAbbr].def -= Math.round(K_STAT * (yardDiff / 100));
+                // Save persistent state
+                localStorage.setItem('nfl_elo_data', JSON.stringify(teamData));
+                const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                localStorage.setItem('nfl_elo_last_sync', now);
 
-    // 3. Home / Away Split Adjustment
-    if (actualHome === 1) {
-        teamData[hAbbr].home += 10;
-        teamData[aAbbr].away -= 10;
-    } else if (actualHome === 0) {
-        teamData[hAbbr].home -= 10;
-        teamData[aAbbr].away += 10;
-    }
-}
+                renderTable();
+                populateDropdowns();
 
-function calculatePrediction() {
-    const home = document.getElementById('homeSelect').value;
-    const away = document.getElementById('awaySelect').value;
-    const resBox = document.getElementById('predictionResult');
+                statusText.innerText = `Done! Processed ${totalGamesProcessed} completed games.`;
+                document.getElementById('lastUpdated').innerText = `Synced at ${now}`;
+            } catch (err) {
+                console.error("Error during full season sync:", err);
+                statusText.innerText = "Error syncing boxscores. Check internet.";
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                syncIcon.classList.remove('animate-spin');
+                syncBtnText.innerText = "Re-sync Season Boxscores";
+                setTimeout(() => progressContainer.classList.add('hidden'), 2000);
+            }
+        }
 
-    if (!home || !away || home === away) {
-        resBox.innerText = "Select two different teams.";
-        return;
-    }
+        // Core Elo Calculation Engine
+        function processGame(home, away) {
+            const hAbbr = home.team.abbreviation;
+            const aAbbr = away.team.abbreviation;
+            const hName = home.team.displayName || hAbbr;
+            const aName = away.team.displayName || aAbbr;
 
-    const hOff = teamData[home].off;
-    const aDef = teamData[away].def;
-    const aOff = teamData[away].off;
-    const hDef = teamData[home].def;
+            initTeam(hAbbr, hName);
+            initTeam(aAbbr, aName);
 
-    const eloDiff = (hOff - aDef) + (hDef - aOff) + HFA;
-    const winProb = (1 / (1 + Math.pow(10, -eloDiff / 400)) * 100).toFixed(1);
-    const spread = (eloDiff / 25).toFixed(1);
+            const hScore = parseInt(home.score || 0);
+            const aScore = parseInt(away.score || 0);
 
-    let favorite = eloDiff > 0 ? home : away;
-    let absSpread = Math.abs(spread);
+            // Extract yards safely from stats array
+            const hYards = parseInt(home.statistics?.find(s => s.name === 'totalYards')?.displayValue || 300);
+            const aYards = parseInt(away.statistics?.find(s => s.name === 'totalYards')?.displayValue || 300);
 
-    resBox.innerHTML = `
-        <b>${home} Win Probability: ${winProb}%</b><br>
-        <span style="color:#aaa;">Projected Spread: ${favorite} -${absSpread}</span>
-    `;
-}
+            // 1. Overall Elo Update (Standard linear + MOV multiplier)
+            const hElo = teamData[hAbbr].overall;
+            const aElo = teamData[aAbbr].overall;
+            const eHome = 1 / (1 + Math.pow(10, (aElo - (hElo + HFA)) / 400));
+            const actualHome = hScore > aScore ? 1 : (hScore === aScore ? 0.5 : 0);
 
-function populateDropdowns() {
-    const hSelect = document.getElementById('homeSelect');
-    const aSelect = document.getElementById('awaySelect');
-    const teams = Object.keys(teamData).sort();
+            // Logarithmic Margin of Victory Multiplier (MOV)
+            const mov = Math.abs(hScore - aScore);
+            const eloDiffWinner = actualHome === 1 ? (hElo - aElo) : (aElo - hElo);
+            const movMult = Math.log(mov + 1) * (2.2 / (eloDiffWinner * 0.001 + 2.2));
 
-    hSelect.innerHTML = '<option value="">Select Home</option>';
-    aSelect.innerHTML = '<option value="">Select Away</option>';
+            const overallDelta = K_OVERALL * movMult * (actualHome - eHome);
 
-    teams.forEach(t => {
-        hSelect.innerHTML += `<option value="${t}">${t}</option>`;
-        aSelect.innerHTML += `<option value="${t}">${t}</option>`;
-    });
-}
+            teamData[hAbbr].overall = Math.round(hElo + overallDelta);
+            teamData[aAbbr].overall = Math.round(aElo - overallDelta);
 
-function renderTable() {
-    const tbody = document.getElementById('eloBody');
-    tbody.innerHTML = '';
-    
-    const sortedTeams = Object.keys(teamData).sort((a,b) => teamData[b].overall - teamData[a].overall);
+            // 2. Offense & Defense Elo Splits (Based on Yardage Differential)
+            const yardDiff = hYards - aYards;
+            const statAdjustment = Math.round(K_STAT * (yardDiff / 100));
 
-    sortedTeams.forEach(team => {
-        const d = teamData[team];
-        tbody.innerHTML += `<tr>
-            <td>${team}</td>
-            <td><b>${d.overall}</b></td>
-            <td>${d.off}</td>
-            <td>${d.def}</td>
-            <td>${d.home}</td>
-            <td>${d.away}</td>
-        </tr>`;
-    });
-}
+            teamData[hAbbr].off += statAdjustment;
+            teamData[aAbbr].def -= statAdjustment;
 
-// Update button event listener to trigger full season sync
-document.querySelector('button').setAttribute('onclick', 'fetchFullSeasonGames()');
+            // 3. Home / Away Specific Split
+            if (actualHome === 1) {
+                teamData[hAbbr].home += 12;
+                teamData[aAbbr].away -= 12;
+            } else if (actualHome === 0) {
+                teamData[hAbbr].home -= 12;
+                teamData[aAbbr].away += 12;
+            }
 
-// Load stored data on boot if available
-let stored = localStorage.getItem('nfl_elo_data');
-if (stored) {
-    teamData = JSON.parse(stored);
-    renderTable();
-    populateDropdowns();
-}
+            teamData[hAbbr].gamesPlayed++;
+            teamData[aAbbr].gamesPlayed++;
+        }
+
+        // Game Matchup Prediction Function
+        function calculatePrediction() {
+            const homeAbbr = document.getElementById('homeSelect').value;
+            const awayAbbr = document.getElementById('awaySelect').value;
+            const resBox = document.getElementById('predictionBox');
+
+            if (!homeAbbr || !awayAbbr) {
+                resBox.innerHTML = `<p class="text-xs text-gray-500">Select two teams to generate linear Elo predictions.</p>`;
+                return;
+            }
+
+            if (homeAbbr === awayAbbr) {
+                resBox.innerHTML = `<p class="text-xs text-amber-400 font-semibold">Please select two different teams.</p>`;
+                return;
+            }
+
+            const home = teamData[homeAbbr];
+            const away = teamData[awayAbbr];
+
+            if (!home || !away) return;
+
+            // Offense vs Defense Elo Linear Matchup
+            const hOffVsADef = home.off - away.def;
+            const hDefVsAOff = home.def - away.off;
+            const hLocVsALoc = home.home - away.away;
+
+            // Net Elo Difference incorporating Home Field Advantage
+            const totalEloDiff = hOffVsADef + hDefVsAOff + (hLocVsALoc * 0.25) + HFA;
+
+            // Win Probability Equation
+            const homeWinProb = (1 / (1 + Math.pow(10, -totalEloDiff / 400)) * 100).toFixed(1);
+            const awayWinProb = (100 - homeWinProb).toFixed(1);
+
+            // Projected Spread Equation (25 Elo points = 1 point on point spread)
+            const spread = (totalEloDiff / 25).toFixed(1);
+            const isHomeFavored = totalEloDiff >= 0;
+            const favorite = isHomeFavored ? homeAbbr : awayAbbr;
+            const absSpread = Math.abs(spread);
+
+            resBox.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-xs text-gray-400 font-semibold border-b border-gray-800 pb-2">
+                        <span>WIN PROBABILITY</span>
+                        <span class="text-blue-400">PROJECTED SPREAD</span>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="text-left">
+                            <span class="text-lg font-extrabold ${isHomeFavored ? 'text-green-400' : 'text-gray-300'}">${homeAbbr} ${homeWinProb}%</span>
+                            <p class="text-[10px] text-gray-500">Home Rating: ${home.overall}</p>
+                        </div>
+                        <div class="text-center px-3 py-1 bg-gray-900 border border-gray-800 rounded-lg">
+                            <span class="text-sm font-bold text-white">${favorite} -${absSpread}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-extrabold ${!isHomeFavored ? 'text-green-400' : 'text-gray-300'}">${awayWinProb}% ${awayAbbr}</span>
+                            <p class="text-[10px] text-gray-500">Away Rating: ${away.overall}</p>
+                        </div>
+                    </div>
+
+                    <!-- Matchup Metric Breakdown -->
+                    <div class="grid grid-cols-3 gap-2 pt-2 border-t border-gray-800/80 text-[11px]">
+                        <div class="bg-gray-900/60 p-2 rounded-lg text-center">
+                            <span class="block text-gray-500 text-[10px]">Offense vs Def</span>
+                            <span class="font-bold ${hOffVsADef >= 0 ? 'text-green-400' : 'text-red-400'}">${hOffVsADef > 0 ? '+' : ''}${hOffVsADef} Elo</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-2 rounded-lg text-center">
+                            <span class="block text-gray-500 text-[10px]">Defense vs Off</span>
+                            <span class="font-bold ${hDefVsAOff >= 0 ? 'text-green-400' : 'text-red-400'}">${hDefVsAOff > 0 ? '+' : ''}${hDefVsAOff} Elo</span>
+                        </div>
+                        <div class="bg-gray-900/60 p-2 rounded-lg text-center">
+                            <span class="block text-gray-500 text-[10px]">Home Split</span>
+                            <span class="font-bold text-blue-400">+${HFA} HFA</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Populate Team Select Dropdowns
+        function populateDropdowns() {
+            const homeSelect = document.getElementById('homeSelect');
+            const awaySelect = document.getElementById('awaySelect');
+            const teams = Object.keys(teamData).sort();
+
+            const currentHome = homeSelect.value;
+            const currentAway = awaySelect.value;
+
+            homeSelect.innerHTML = '<option value="">Select Home</option>';
+            awaySelect.innerHTML = '<option value="">Select Away</option>';
+
+            teams.forEach(abbr => {
+                const team = teamData[abbr];
+                homeSelect.innerHTML += `<option value="${abbr}">${abbr} (${team.overall})</option>`;
+                awaySelect.innerHTML += `<option value="${abbr}">${abbr} (${team.overall})</option>`;
+            });
+
+            homeSelect.value = currentHome;
+            awaySelect.value = currentAway;
+        }
+
+        // Render Leaderboard Table
+        function renderTable() {
+            const tbody = document.getElementById('eloTableBody');
+            const countBadge = document.getElementById('teamCountBadge');
+            const teams = Object.keys(teamData);
+
+            countBadge.innerText = `${teams.length} Teams`;
+
+            if (teams.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500">
+                            No Elo data available. Tap "Sync Season Boxscores" above to compute.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            const sortedTeams = teams.sort((a, b) => teamData[b].overall - teamData[a].overall);
+
+            tbody.innerHTML = sortedTeams.map((abbr, index) => {
+                const t = teamData[abbr];
+                const isTop3 = index < 3;
+                const rankBadge = isTop3 
+                    ? `<span class="inline-block w-4 text-center font-bold text-amber-400">${index + 1}</span>` 
+                    : `<span class="inline-block w-4 text-center text-gray-500">${index + 1}</span>`;
+
+                return `
+                    <tr class="hover:bg-gray-800/40 transition-colors">
+                        <td class="py-2.5 px-3 flex items-center space-x-2">
+                            ${rankBadge}
+                            <span class="font-bold text-white">${abbr}</span>
+                        </td>
+                        <td class="py-2.5 px-2 text-center font-extrabold text-blue-400">${t.overall}</td>
+                        <td class="py-2.5 px-2 text-center text-gray-300">${t.off}</td>
+                        <td class="py-2.5 px-2 text-center text-gray-300">${t.def}</td>
+                        <td class="py-2.5 px-2 text-center text-gray-400">${t.home}</td>
+                        <td class="py-2.5 px-2 text-center text-gray-400">${t.away}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Load cached LocalStorage state on initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = localStorage.getItem('nfl_elo_data');
+            const lastSync = localStorage.getItem('nfl_elo_last_sync');
+
+            if (savedData) {
+                try {
+                    teamData = JSON.parse(savedData);
+                    renderTable();
+                    populateDropdowns();
+                    if (lastSync) {
+                        document.getElementById('lastUpdated').innerText = `Synced at ${lastSync}`;
+                    }
+                } catch (e) {
+                    console.error("Error parsing saved Elo data:", e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
