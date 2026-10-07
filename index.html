@@ -1,527 +1,552 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFL Elo Tracker & Predictor</title>
-    <style>
-        :root {
-            --bg-dark: #121212;
-            --card-bg: #1e1e1e;
-            --card-border: #2c2c2c;
-            --accent-blue: #007bff;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --home-color: #28a745;
-            --away-color: #17a2b8;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            padding: 12px;
-            box-sizing: border-box;
-        }
-
-        h2, h3 {
-            color: #ffffff;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 14px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        button {
-            background-color: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            width: 100%;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button:active {
-            background-color: #0056b3;
-        }
-
-        .status-box {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 8px;
-            text-align: center;
-        }
-
-        /* Game Prediction Card Styling */
-        .matchup-card {
-            background: #252525;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            border: 1px solid #333;
-        }
-
-        .matchup-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 4px;
-        }
-
-        .teams-container {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            text-align: center;
-            gap: 8px;
-        }
-
-        .team-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .team-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            margin-bottom: 4px;
-        }
-
-        .team-name {
-            font-weight: bold;
-            font-size: 15px;
-        }
-
-        .team-prob {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 2px;
-        }
-
-        .vs-box {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: bold;
-        }
-
-        .spread-bar {
-            background: #333;
-            border-radius: 4px;
-            height: 8px;
-            width: 100%;
-            margin-top: 10px;
-            overflow: hidden;
-            display: flex;
-        }
-
-        .home-bar { background: var(--home-color); height: 100%; }
-        .away-bar { background: var(--away-color); height: 100%; }
-
-        .spread-text {
-            text-align: center;
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 6px;
-            color: #fff;
-        }
-
-        /* Expandable Projected Stats Drawer */
-        details {
-            margin-top: 10px;
-            background: #1a1a1a;
-            border-radius: 6px;
-            padding: 8px;
-            border: 1px solid #2a2a2a;
-        }
-
-        summary {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--accent-blue);
-            cursor: pointer;
-            outline: none;
-        }
-
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-            font-size: 12px;
-        }
-
-        .stats-table th, .stats-table td {
-            padding: 6px 4px;
-            text-align: center;
-            border-bottom: 1px solid #2a2a2a;
-        }
-
-        .stats-table th {
-            color: var(--text-muted);
-            background: #222;
-        }
-
-        /* Leaderboard Table */
-        .elo-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .elo-table th, .elo-table td {
-            padding: 8px 4px;
-            text-align: center;
-            border-bottom: 1px solid #333;
-        }
-
-        .elo-table th {
-            background-color: #252525;
-            color: var(--text-muted);
-        }
-
-        .elo-table td:first-child, .elo-table th:first-child {
-            text-align: left;
-            font-weight: bold;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NFL 2026 Multi-Stat Elo Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background:#0b1120; }
+  .tab-btn.active { background:#2563eb; color:#fff; }
+  input[type=number], input[type=text], select { background:#0f172a; border:1px solid #334155; border-radius:.375rem; padding:.25rem .5rem; color:#e2e8f0; width:100%; }
+  input:focus, select:focus { outline:2px solid #3b82f6; }
+  details > summary { cursor:pointer; list-style:none; }
+  details > summary::-webkit-details-marker { display:none; }
+  .pill.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+  th { position:sticky; top:0; background:#111a2e; }
+</style>
 </head>
-<body>
+<body class="text-slate-200 min-h-screen">
 
-    <h2>NFL Elo Engine</h2>
-
-    <!-- Control Box -->
-    <div class="card">
-        <button onclick="syncFullSeasonData()">Fetch & Recalculate Season</button>
-        <div id="status" class="status-box">Status: Ready</div>
+<header class="border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-20">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+    <div>
+      <h1 class="text-xl font-extrabold tracking-tight">NFL 2026 <span class="text-blue-400">Multi-Stat Elo Lab</span></h1>
+      <p class="text-xs text-slate-400">11 stat-specific Elo ratings per team · baseline 160 · composite spread &amp; win probability</p>
     </div>
+    <nav class="flex gap-2 text-sm font-semibold">
+      <button class="tab-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700" data-tab="pred">Week 5+ Predictions &amp; Simulator</button>
+      <button class="tab-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700" data-tab="lead">Stat-Specific Leaderboards</button>
+      <button class="tab-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700" data-tab="hist">Match History &amp; Stat Logs</button>
+    </nav>
+  </div>
+</header>
 
-    <!-- Upcoming Games Predictions -->
-    <div class="card">
-        <h3 id="weekHeader">Upcoming Predictions</h3>
-        <div id="gamesContainer">
-            <p style="font-size:13px; color:#aaa; text-align:center;">Click the button above to calculate team Elos and fetch upcoming week matchups.</p>
+<main class="max-w-7xl mx-auto px-4 py-5 space-y-5">
+
+  <!-- Data bar -->
+  <section class="rounded-xl border border-slate-800 bg-slate-900/60 p-3 flex flex-wrap items-center gap-2 text-sm">
+    <span id="dataStatus" class="mr-auto text-slate-300"></span>
+    <button id="btnDemo" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 font-semibold">Load demo data (synthetic)</button>
+    <button id="btnExport" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600">Export JSON</button>
+    <label class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 cursor-pointer">Import JSON<input id="fileImport" type="file" accept=".json" class="hidden"></label>
+    <button id="btnClear" class="px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-600">Clear all</button>
+  </section>
+
+  <!-- ===================== TAB: PREDICTIONS ===================== -->
+  <div id="tab-pred" class="tab space-y-5">
+    <div class="grid lg:grid-cols-3 gap-5">
+      <section class="lg:col-span-1 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="font-bold">Model Weights</h2>
+          <button id="btnResetW" class="text-xs text-blue-400 hover:underline">Reset</button>
         </div>
+        <p class="text-xs text-slate-400 mb-3">Composite margin = home-field + weighted average of each stat's Elo-implied point margin.</p>
+        <div id="weights" class="space-y-2"></div>
+        <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+          <label>Home-field (pts)<input id="hfa" type="number" step="0.5"></label>
+          <label>Margin σ (pts)<input id="sigma" type="number" step="0.5"></label>
+        </div>
+        <label class="flex items-center gap-2 mt-3 text-xs text-slate-300">
+          <input id="rawMode" type="checkbox" class="w-4 h-4"> Pure raw formula (no per-stat scaling)
+        </label>
+        <p class="text-[11px] text-slate-500 mt-1">Default scales stats into smaller units (e.g. yards ÷ 10) so one game doesn't swamp a 160 baseline. Tick for the unscaled formula.</p>
+      </section>
+
+      <section class="lg:col-span-2 space-y-5">
+        <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <div class="flex flex-wrap items-end gap-3 mb-3">
+            <h2 class="font-bold mr-auto">Upcoming Matchups</h2>
+            <label class="text-xs">Week<select id="predWeek" class="w-24"></select></label>
+          </div>
+          <div id="fixtures" class="grid md:grid-cols-2 gap-3"></div>
+        </div>
+
+        <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <h2 class="font-bold mb-2">Custom Matchup</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end text-xs">
+            <label>Away<select id="cAway"></select></label>
+            <label>Home<select id="cHome"></select></label>
+            <button id="btnCustom" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-semibold text-sm">Predict</button>
+          </div>
+          <div id="customOut" class="mt-3"></div>
+        </div>
+      </section>
     </div>
 
-    <!-- Rankings Table -->
-    <div class="card">
-        <h3>Team Elo Ratings</h3>
-        <table class="elo-table">
-            <thead>
-                <tr>
-                    <th>Team</th>
-                    <th>Overall</th>
-                    <th>Off</th>
-                    <th>Def</th>
-                    <th>Home</th>
-                    <th>Away</th>
-                </tr>
-            </thead>
-            <tbody id="eloBody"></tbody>
+    <section class="grid lg:grid-cols-3 gap-5">
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <h2 class="font-bold mb-2">Add Fixture</h2>
+        <div class="grid grid-cols-3 gap-2 text-xs items-end">
+          <label>Week<input id="aWeek" type="number" min="1" max="18" value="5"></label>
+          <label>Away<select id="aAway"></select></label>
+          <label>Home<select id="aHome"></select></label>
+        </div>
+        <button id="btnAddFx" class="mt-3 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm">Add to schedule</button>
+        <p class="text-[11px] text-slate-500 mt-2">Add past games (weeks 1-4) the same way, then enter their box scores in the simulator to build the Elos from scratch.</p>
+      </div>
+
+      <div class="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-4" id="simBox">
+        <div class="flex flex-wrap items-end gap-3 mb-3">
+          <h2 class="font-bold mr-auto">Result Simulator / Box Score Entry</h2>
+          <label class="text-xs w-72">Game<select id="simGame"></select></label>
+        </div>
+        <div id="simForm"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== TAB: LEADERBOARDS ===================== -->
+  <div id="tab-lead" class="tab hidden space-y-4">
+    <section class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <div id="statPills" class="flex flex-wrap gap-2 mb-4"></div>
+      <div class="overflow-auto max-h-[70vh] rounded-lg border border-slate-800">
+        <table class="w-full text-sm" id="leadTable"></table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== TAB: HISTORY ===================== -->
+  <div id="tab-hist" class="tab hidden space-y-4">
+    <section class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-4">
+        <label>Week<select id="hWeek"></select></label>
+        <label>Team<select id="hTeam"></select></label>
+        <label>Stat<select id="hStat"></select></label>
+        <label class="flex items-end"><span class="text-slate-500">Expand a game to see each Elo step.</span></label>
+      </div>
+      <div id="trajectory" class="mb-4"></div>
+      <div id="histList" class="space-y-2"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="max-w-7xl mx-auto px-4 pb-8 text-[11px] text-slate-500">
+  Elo update: Expected = (Home Elo − Away Elo) / 4 · Real = (Home stat − Away stat) · Δ = Real − Expected · New Elo = Old Elo + Δ (home) and Old Elo − Δ (away, so each stat's league total stays constant).
+  Turnovers are lower-is-better, so their margin is flipped. Demo data is randomly generated and is NOT real NFL results.
+</footer>
+
+<script>
+/* ======================== CONSTANTS ======================== */
+const BASE = 160;
+const LS_KEY = 'nfl2026_multistat_elo_v1';
+const TEAMS = [
+ ['ARI','Arizona Cardinals'],['ATL','Atlanta Falcons'],['BAL','Baltimore Ravens'],['BUF','Buffalo Bills'],
+ ['CAR','Carolina Panthers'],['CHI','Chicago Bears'],['CIN','Cincinnati Bengals'],['CLE','Cleveland Browns'],
+ ['DAL','Dallas Cowboys'],['DEN','Denver Broncos'],['DET','Detroit Lions'],['GB','Green Bay Packers'],
+ ['HOU','Houston Texans'],['IND','Indianapolis Colts'],['JAX','Jacksonville Jaguars'],['KC','Kansas City Chiefs'],
+ ['LV','Las Vegas Raiders'],['LAC','Los Angeles Chargers'],['LAR','Los Angeles Rams'],['MIA','Miami Dolphins'],
+ ['MIN','Minnesota Vikings'],['NE','New England Patriots'],['NO','New Orleans Saints'],['NYG','New York Giants'],
+ ['NYJ','New York Jets'],['PHI','Philadelphia Eagles'],['PIT','Pittsburgh Steelers'],['SF','San Francisco 49ers'],
+ ['SEA','Seattle Seahawks'],['TB','Tampa Bay Buccaneers'],['TEN','Tennessee Titans'],['WAS','Washington Commanders']
+].map(([id,name])=>({id,name}));
+const TEAM = Object.fromEntries(TEAMS.map(t=>[t.id,t]));
+
+// scale: raw units per Elo unit · lb: lower is better · k: points of margin per raw unit · w: default weight
+const STATS = [
+ {id:'tot',  name:'Total Yards',            scale:10,  lb:false, k:0.07, w:3,   unit:'yds'},
+ {id:'pass', name:'Passing Yards',          scale:10,  lb:false, k:0.06, w:1,   unit:'yds'},
+ {id:'rush', name:'Rushing Yards',          scale:10,  lb:false, k:0.08, w:1,   unit:'yds'},
+ {id:'ypp',  name:'Yards Per Play',         scale:0.1, lb:false, k:7,    w:3,   unit:'y/p'},
+ {id:'fd',   name:'First Downs',            scale:1,   lb:false, k:0.45, w:1,   unit:''},
+ {id:'third',name:'3rd/4th Down Efficiency',scale:5,   lb:false, k:0.2,  w:1.5, unit:'%'},
+ {id:'to',   name:'Turnovers',              scale:1,   lb:true,  k:4,    w:3,   unit:''},
+ {id:'top',  name:'Time of Possession',     scale:1,   lb:false, k:0.3,  w:0.5, unit:'min'},
+ {id:'tkl',  name:'Tackles',                scale:2,   lb:false, k:0.1,  w:0.25,unit:''},
+ {id:'fg',   name:'Field Goals',            scale:1,   lb:false, k:3,    w:1,   unit:''},
+ {id:'rz',   name:'Red Zone Efficiency',    scale:5,   lb:false, k:0.06, w:2.5, unit:'%'},
+];
+const SMAP = Object.fromEntries(STATS.map(s=>[s.id,s]));
+const FIELDS = [
+ ['tot','Total yds'],['pass','Pass yds'],['rush','Rush yds'],['plays','Plays'],['fd','1st downs'],
+ ['td3m','3rd made'],['td3a','3rd att'],['td4m','4th made'],['td4a','4th att'],
+ ['to','Turnovers'],['top','TOP (mm:ss)'],['tkl','Tackles'],['fg','FG made'],['rzt','RZ trips'],['rztd','RZ TDs']
+];
+
+/* ======================== STATE ======================== */
+let S = { games:[], weights:{}, hfa:2, sigma:13.5, raw:false, nextId:1 };
+let E = {}, LOG = [], LASTD = {};
+let leadStat = 'tot';
+
+function defaultWeights(){ const w={}; STATS.forEach(s=>w[s.id]=s.w); return w; }
+S.weights = defaultWeights();
+
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const r=localStorage.getItem(LS_KEY); if(r){ const o=JSON.parse(r); S=Object.assign(S,o); S.weights=Object.assign(defaultWeights(),S.weights||{}); } }catch(e){} }
+
+/* ======================== HELPERS ======================== */
+const $ = id => document.getElementById(id);
+const f1 = n => (n==null||isNaN(n))?'–':n.toFixed(1);
+const f2 = n => (n==null||isNaN(n))?'–':n.toFixed(2);
+const sgn = n => (n>=0?'+':'')+n.toFixed(1);
+const scaleOf = s => S.raw ? 1 : s.scale;
+const tOpts = (sel) => TEAMS.map(t=>`<option value="${t.id}" ${t.id===sel?'selected':''}>${t.id} – ${t.name}</option>`).join('');
+
+function parseTop(v){
+  if(v===''||v==null) return null;
+  if(typeof v==='number') return v;
+  const s=String(v).trim();
+  if(s.includes(':')){ const [m,sec]=s.split(':'); return (+m)+(+sec||0)/60; }
+  const n=parseFloat(s); return isNaN(n)?null:n;
+}
+function fmtTop(m){ if(m==null) return ''; const mm=Math.floor(m); const ss=Math.round((m-mm)*60); return mm+':'+String(ss).padStart(2,'0'); }
+
+// Convert a raw box score into the 11 stat values (null when not computable)
+function vals(b){
+  if(!b) return {};
+  const n = k => (b[k]===''||b[k]==null||isNaN(+b[k])) ? null : +b[k];
+  const tot=n('tot'), plays=n('plays');
+  const a3=n('td3a'), a4=n('td4a'), m3=n('td3m'), m4=n('td4m');
+  const att=(a3||0)+(a4||0), made=(m3||0)+(m4||0);
+  const rzt=n('rzt'), rztd=n('rztd');
+  return {
+    tot, pass:n('pass'), rush:n('rush'),
+    ypp:(tot!=null&&plays)?tot/plays:null,
+    fd:n('fd'),
+    third: ((a3!=null||a4!=null)&&att>0)?made/att*100:null,
+    to:n('to'), top:parseTop(b.top), tkl:n('tkl'), fg:n('fg'),
+    rz:(rzt&&rztd!=null)?rztd/rzt*100:null
+  };
+}
+
+/* ======================== ELO ENGINE ======================== */
+function compute(){
+  E={}; LOG=[]; LASTD={};
+  TEAMS.forEach(t=>{ E[t.id]={}; LASTD[t.id]={}; STATS.forEach(s=>{E[t.id][s.id]=BASE; LASTD[t.id][s.id]=0;}); });
+  const played = S.games.filter(g=>g.played).sort((a,b)=>a.week-b.week||a.id-b.id);
+  played.forEach(g=>{
+    const hv=vals(g.hb), av=vals(g.ab), ent=[];
+    STATS.forEach(s=>{
+      const h=hv[s.id], a=av[s.id];
+      if(h==null||a==null){ ent.push({s:s.id,skip:true}); return; }
+      const sc=scaleOf(s);
+      let real=(h-a)/sc; if(s.lb) real=-real;
+      const ho=E[g.home][s.id], ao=E[g.away][s.id];
+      const exp=(ho-ao)/4, d=real-exp;
+      E[g.home][s.id]=ho+d; E[g.away][s.id]=ao-d;
+      LASTD[g.home][s.id]=d; LASTD[g.away][s.id]=-d;
+      ent.push({s:s.id,hv:h,av:a,ho,ao,exp,real,d,hn:ho+d,an:ao-d});
+    });
+    LOG.push({g,ent});
+  });
+}
+
+/* Multi-factor integration: weighted mean of per-stat implied point margins */
+function predict(home, away){
+  const rows=[]; let num=0, den=0;
+  STATS.forEach(s=>{
+    const dE=E[home][s.id]-E[away][s.id];
+    const exp=dE/4;                       // expected stat margin in Elo units
+    const pts=exp*scaleOf(s)*s.k;         // converted to points
+    const w=S.weights[s.id]||0;
+    num+=w*pts; den+=w;
+    rows.push({s,dE,exp,pts,w});
+  });
+  const stat = den>0 ? num/den : 0;
+  const margin = S.hfa + stat;
+  const p = normCdf(margin/S.sigma);
+  rows.forEach(r=>r.share = den>0 ? r.w*r.pts/den : 0);
+  return {margin, stat, p, rows};
+}
+function normCdf(x){ // Abramowitz-Stegun
+  const t=1/(1+0.2316419*Math.abs(x)), d=0.3989423*Math.exp(-x*x/2);
+  const p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return x>0?1-p:p;
+}
+function composite(team){ // team power vs league-average opponent, in points
+  let num=0,den=0; STATS.forEach(s=>{ const w=S.weights[s.id]||0; num+=w*((E[team][s.id]-BASE)/4*scaleOf(s)*s.k); den+=w; });
+  return den>0?num/den:0;
+}
+
+/* ======================== RENDER: PREDICTIONS ======================== */
+function matchCard(home, away, week, gid){
+  const r=predict(home,away);
+  const fav = r.margin>=0?home:away, pf=r.margin>=0?r.p:1-r.p;
+  const line = `${fav} −${Math.abs(r.margin).toFixed(1)}`;
+  const hp=(r.p*100).toFixed(1), ap=((1-r.p)*100).toFixed(1);
+  return `<div class="rounded-lg border border-slate-700 bg-slate-950/60 p-3">
+    <div class="flex items-center justify-between text-xs text-slate-400">
+      <span>${week?('Week '+week):'Custom'}</span><span class="font-semibold text-blue-300">${line}</span></div>
+    <div class="flex items-center justify-between mt-1 font-bold">
+      <span>${away} <span class="text-slate-500 font-normal text-xs">@</span> ${home}</span>
+      <span class="text-xs font-semibold">${(pf*100).toFixed(1)}% ${fav}</span></div>
+    <div class="flex h-2 rounded overflow-hidden mt-2 bg-slate-800">
+      <div class="bg-rose-500" style="width:${ap}%"></div><div class="bg-emerald-500" style="width:${hp}%"></div></div>
+    <div class="flex justify-between text-[11px] text-slate-500 mt-1"><span>${away} ${ap}%</span><span>${home} ${hp}%</span></div>
+    <details class="mt-2">
+      <summary class="text-xs text-blue-400 hover:underline">Stat breakdown</summary>
+      <table class="w-full text-[11px] mt-1">
+        <tr class="text-slate-500"><td>Stat</td><td class="text-right">ΔElo</td><td class="text-right">Implied</td><td class="text-right">Contrib.</td></tr>
+        ${r.rows.map(x=>`<tr><td>${x.s.name}</td><td class="text-right">${sgn(x.dE)}</td><td class="text-right ${x.pts>=0?'text-emerald-400':'text-rose-400'}">${sgn(x.pts)}</td><td class="text-right">${sgn(x.share)}</td></tr>`).join('')}
+        <tr class="border-t border-slate-700"><td colspan="3">Home field</td><td class="text-right">${sgn(S.hfa)}</td></tr>
+        <tr class="font-semibold"><td colspan="3">Composite margin (${home})</td><td class="text-right">${sgn(r.margin)}</td></tr>
+      </table>
+    </details>
+    ${gid?`<button onclick="pickGame(${gid})" class="mt-2 text-xs px-2 py-1 rounded bg-slate-700 hover:bg-slate-600">Enter result →</button>`:''}
+  </div>`;
+}
+
+function renderWeights(){
+  $('weights').innerHTML = STATS.map(s=>`<div>
+    <div class="flex justify-between text-xs"><span>${s.name}${s.lb?' <span class="text-slate-500">(lower=better)</span>':''}</span><span id="wv_${s.id}" class="text-blue-300 font-semibold">${S.weights[s.id]}</span></div>
+    <input type="range" min="0" max="5" step="0.25" value="${S.weights[s.id]}" data-w="${s.id}" class="w-full accent-blue-500">
+  </div>`).join('');
+  $('weights').querySelectorAll('input[type=range]').forEach(el=>{
+    el.oninput=()=>{ S.weights[el.dataset.w]=+el.value; $('wv_'+el.dataset.w).textContent=el.value; save(); renderFixtures(); renderCustom(); };
+  });
+  $('hfa').value=S.hfa; $('sigma').value=S.sigma; $('rawMode').checked=S.raw;
+}
+
+function renderWeekSelect(){
+  const weeks=[...new Set(S.games.filter(g=>!g.played).map(g=>g.week))].sort((a,b)=>a-b);
+  const cur=$('predWeek').value;
+  $('predWeek').innerHTML = weeks.length? weeks.map(w=>`<option value="${w}">${w}</option>`).join('') : '<option value="">–</option>';
+  if(weeks.includes(+cur)) $('predWeek').value=cur;
+}
+function renderFixtures(){
+  const w=+$('predWeek').value;
+  const gs=S.games.filter(g=>!g.played && g.week===w);
+  $('fixtures').innerHTML = gs.length? gs.map(g=>matchCard(g.home,g.away,g.week,g.id)).join('')
+    : '<p class="text-sm text-slate-400 col-span-2">No upcoming fixtures. Load the demo data, import a JSON file, or add fixtures below.</p>';
+}
+function renderCustom(){
+  const h=$('cHome').value, a=$('cAway').value;
+  $('customOut').innerHTML = (h&&a&&h!==a)? matchCard(h,a,null,null) : '';
+}
+
+function renderSimSelect(){
+  const gs=S.games.filter(g=>!g.played).sort((a,b)=>a.week-b.week||a.id-b.id);
+  const cur=$('simGame').value;
+  $('simGame').innerHTML = gs.length? gs.map(g=>`<option value="${g.id}">Wk ${g.week}: ${g.away} @ ${g.home}</option>`).join('') : '<option value="">No unplayed games</option>';
+  if(gs.some(g=>String(g.id)===cur)) $('simGame').value=cur;
+  renderSimForm();
+}
+function inputRow(side){
+  return FIELDS.map(([k,l])=>`<label class="text-[11px]">${l}<input type="${k==='top'?'text':'number'}" id="f_${side}_${k}" ${k==='top'?'placeholder="30:00"':''} step="any"></label>`).join('');
+}
+function renderSimForm(){
+  const g=S.games.find(x=>String(x.id)===$('simGame').value);
+  if(!g){ $('simForm').innerHTML='<p class="text-sm text-slate-400">Add or load an unplayed fixture to enter its result.</p>'; return; }
+  const p=predict(g.home,g.away);
+  $('simForm').innerHTML=`
+    <p class="text-xs text-slate-400 mb-2">Model says <b class="text-blue-300">${g.home} ${sgn(p.margin)}</b> (${(p.p*100).toFixed(1)}% home). Enter actual stats to update all 11 Elos.</p>
+    <div class="grid md:grid-cols-2 gap-4">
+      ${['a','h'].map(side=>{const tm=side==='h'?g.home:g.away; return `<div class="rounded-lg border border-slate-700 p-3">
+        <div class="font-bold mb-2">${tm} <span class="text-xs text-slate-500 font-normal">${side==='h'?'(home)':'(away)'}</span></div>
+        <label class="text-[11px]">Final score<input type="number" id="f_${side}_score"></label>
+        <div class="grid grid-cols-3 gap-2 mt-2">${inputRow(side)}</div></div>`;}).join('')}
+    </div>
+    <div class="flex flex-wrap gap-2 mt-3">
+      <button id="btnApply" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm">Finalize &amp; update Elos</button>
+      <button id="btnFill" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm">Fill typical values</button>
+      <button id="btnDelFx" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-700 text-sm">Delete fixture</button>
+    </div>
+    <div id="simMsg" class="text-xs mt-2"></div>`;
+  $('btnApply').onclick=()=>applyResult(g.id);
+  $('btnFill').onclick=fillTypical;
+  $('btnDelFx').onclick=()=>{ S.games=S.games.filter(x=>x.id!==g.id); save(); refresh(); };
+}
+function fillTypical(){
+  const r=(a,b)=>Math.round(a+Math.random()*(b-a));
+  ['h','a'].forEach(s=>{
+    const tot=r(260,440), pass=Math.round(tot*(0.55+Math.random()*0.15));
+    const set=(k,v)=>$(`f_${s}_${k}`).value=v;
+    set('score',r(10,34)); set('tot',tot); set('pass',pass); set('rush',tot-pass); set('plays',r(56,72)); set('fd',r(15,26));
+    set('td3a',r(10,16)); set('td3m',r(3,8)); set('td4a',r(0,3)); set('td4m',r(0,2));
+    set('to',r(0,3)); set('tkl',r(50,75)); set('fg',r(0,3)); set('rzt',r(2,5)); set('rztd',r(1,3));
+  });
+  const t=26+Math.random()*8; $('f_h_top').value=fmtTop(t); $('f_a_top').value=fmtTop(60-t);
+}
+function readBox(side){
+  const b={}; FIELDS.forEach(([k])=>{ const v=$(`f_${side}_${k}`).value; b[k]=v===''?null:(k==='top'?v:+v); }); return b;
+}
+function applyResult(id){
+  const g=S.games.find(x=>x.id===id); if(!g) return;
+  const hb=readBox('h'), ab=readBox('a');
+  const hs=$('f_h_score').value, as=$('f_a_score').value;
+  const hv=vals(hb), av=vals(ab);
+  const usable=STATS.filter(s=>hv[s.id]!=null&&av[s.id]!=null).length;
+  if(usable===0){ $('simMsg').innerHTML='<span class="text-rose-400">Enter at least some stats for both teams (e.g. total yards).</span>'; return; }
+  g.hb=hb; g.ab=ab; g.hs=hs===''?null:+hs; g.as=as===''?null:+as; g.played=true;
+  save(); refresh();
+}
+window.pickGame=function(id){ $('simGame').value=String(id); renderSimForm(); $('simBox').scrollIntoView({behavior:'smooth'}); };
+
+/* ======================== RENDER: LEADERBOARDS ======================== */
+function renderPills(){
+  const items=[{id:'comp',name:'Composite Power (pts)'}].concat(STATS);
+  $('statPills').innerHTML = items.map(s=>`<button data-s="${s.id}" class="pill px-3 py-1 rounded-full border border-slate-700 text-xs font-semibold hover:bg-slate-800 ${s.id===leadStat?'active':''}">${s.name}</button>`).join('');
+  $('statPills').querySelectorAll('button').forEach(b=>b.onclick=()=>{ leadStat=b.dataset.s; renderPills(); renderLeaderboard(); });
+}
+function renderLeaderboard(){
+  const isC = leadStat==='comp';
+  const rows = TEAMS.map(t=>({t, v: isC?composite(t.id):E[t.id][leadStat], d: isC?null:LASTD[t.id][leadStat]}))
+                    .sort((a,b)=>b.v-a.v);
+  const ref = isC?0:BASE;
+  const maxAbs = Math.max(1,...rows.map(r=>Math.abs(r.v-ref)));
+  $('leadTable').innerHTML = `<thead><tr class="text-left text-slate-400 text-xs">
+      <th class="p-2 w-10">#</th><th class="p-2">Team</th><th class="p-2 text-right">${isC?'Power':'Elo'}</th><th class="p-2 text-right">vs ${isC?'avg':BASE}</th><th class="p-2 text-right">Last Δ</th><th class="p-2 w-1/3">&nbsp;</th></tr></thead><tbody>`
+    + rows.map((r,i)=>{ const diff=r.v-ref; const pct=Math.min(50,Math.abs(diff)/maxAbs*50);
+      return `<tr class="border-t border-slate-800 hover:bg-slate-800/40">
+        <td class="p-2 text-slate-500">${i+1}</td>
+        <td class="p-2 font-semibold">${r.t.name}</td>
+        <td class="p-2 text-right tabular-nums">${f1(r.v)}</td>
+        <td class="p-2 text-right tabular-nums ${diff>=0?'text-emerald-400':'text-rose-400'}">${sgn(diff)}</td>
+        <td class="p-2 text-right tabular-nums text-slate-400">${r.d==null?'–':sgn(r.d)}</td>
+        <td class="p-2"><div class="relative h-2 bg-slate-800 rounded"><div class="absolute top-0 bottom-0 ${diff>=0?'bg-emerald-500 left-1/2':'bg-rose-500 right-1/2'} rounded" style="width:${pct}%"></div></div></td></tr>`; }).join('')
+    + '</tbody>';
+}
+
+/* ======================== RENDER: HISTORY ======================== */
+function initHistFilters(){
+  const weeks=[...new Set(S.games.filter(g=>g.played).map(g=>g.week))].sort((a,b)=>a-b);
+  const w=$('hWeek').value, t=$('hTeam').value, s=$('hStat').value;
+  $('hWeek').innerHTML='<option value="">All weeks</option>'+weeks.map(x=>`<option>${x}</option>`).join('');
+  $('hTeam').innerHTML='<option value="">All teams</option>'+tOpts('');
+  $('hStat').innerHTML='<option value="">All stats</option>'+STATS.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
+  $('hWeek').value=w; $('hTeam').value=t; $('hStat').value=s;
+}
+function renderHistory(){
+  const w=$('hWeek').value, t=$('hTeam').value, st=$('hStat').value;
+  const items=LOG.filter(l=>(!w||l.g.week===+w)&&(!t||l.g.home===t||l.g.away===t));
+  $('histList').innerHTML = items.length? items.map(l=>{
+    const g=l.g;
+    const ents=l.ent.filter(e=>!st||e.s===st);
+    return `<details class="rounded-lg border border-slate-700 bg-slate-950/50">
+      <summary class="p-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs px-2 py-0.5 rounded bg-slate-800">Wk ${g.week}</span>
+        <span class="font-semibold">${g.away} @ ${g.home}</span>
+        ${g.hs!=null&&g.as!=null?`<span class="text-slate-400 text-sm">${g.as}–${g.hs}</span>`:''}
+        <span class="ml-auto text-xs text-blue-400">view steps</span></summary>
+      <div class="p-3 pt-0 overflow-auto">
+        <table class="w-full text-xs">
+          <tr class="text-slate-400 text-left"><th class="p-1">Stat</th><th class="p-1 text-right">${g.home} / ${g.away}</th><th class="p-1 text-right">Old Elo (H / A)</th><th class="p-1 text-right">Expected</th><th class="p-1 text-right">Real</th><th class="p-1 text-right">Δ</th><th class="p-1 text-right">New Elo (H / A)</th></tr>
+          ${ents.map(e=>{ const s=SMAP[e.s]; if(e.skip) return `<tr class="border-t border-slate-800 text-slate-500"><td class="p-1">${s.name}</td><td colspan="6" class="p-1">skipped (missing data)</td></tr>`;
+            const disp=v=>s.id==='top'?fmtTop(v):(s.id==='ypp'?f2(v):(s.unit==='%'?f1(v)+'%':f1(v)));
+            return `<tr class="border-t border-slate-800">
+              <td class="p-1">${s.name}</td>
+              <td class="p-1 text-right tabular-nums">${disp(e.hv)} / ${disp(e.av)}</td>
+              <td class="p-1 text-right tabular-nums">${f2(e.ho)} / ${f2(e.ao)}</td>
+              <td class="p-1 text-right tabular-nums">(${f2(e.ho)}−${f2(e.ao)})/4 = ${f2(e.exp)}</td>
+              <td class="p-1 text-right tabular-nums">${f2(e.real)}</td>
+              <td class="p-1 text-right tabular-nums ${e.d>=0?'text-emerald-400':'text-rose-400'}">${e.d>=0?'+':''}${f2(e.d)}</td>
+              <td class="p-1 text-right tabular-nums font-semibold">${f2(e.hn)} / ${f2(e.an)}</td></tr>`; }).join('')}
         </table>
-    </div>
+        <button onclick="revertGame(${g.id})" class="mt-2 text-xs px-2 py-1 rounded bg-slate-800 hover:bg-amber-700">Revert to upcoming (recomputes Elos)</button>
+      </div></details>`; }).join('')
+    : '<p class="text-sm text-slate-400">No completed games yet. Load demo data or finalize a game in the simulator.</p>';
+  renderTrajectory();
+}
+window.revertGame=function(id){ const g=S.games.find(x=>x.id===id); if(g){ g.played=false; save(); refresh(); } };
 
-    <script>
-        const K_OVERALL = 20;
-        const K_STAT = 15;
-        const HFA = 48; // Home Field Advantage in Elo points
+function renderTrajectory(){
+  const t=$('hTeam').value, st=$('hStat').value;
+  if(!t||!st){ $('trajectory').innerHTML='<p class="text-xs text-slate-500">Pick a team and a stat to see its Elo trajectory.</p>'; return; }
+  const pts=[{x:'Start',y:BASE}];
+  LOG.forEach(l=>{ if(l.g.home!==t&&l.g.away!==t) return; const e=l.ent.find(z=>z.s===st); if(!e||e.skip) return;
+    pts.push({x:`Wk${l.g.week} ${l.g.home===t?'vs '+l.g.away:'@ '+l.g.home}`, y:l.g.home===t?e.hn:e.an}); });
+  const W=700,H=160,P=28;
+  const ys=pts.map(p=>p.y), mn=Math.min(...ys)-1, mx=Math.max(...ys)+1;
+  const X=i=>P+(pts.length<2?0:i*(W-2*P)/(pts.length-1)), Y=v=>H-P-(v-mn)/(mx-mn)*(H-2*P);
+  $('trajectory').innerHTML=`<div class="text-xs text-slate-400 mb-1">${TEAM[t].name} — ${SMAP[st].name} Elo</div>
+   <svg viewBox="0 0 ${W} ${H}" class="w-full max-w-3xl bg-slate-950/60 rounded-lg border border-slate-800">
+    <line x1="${P}" x2="${W-P}" y1="${Y(BASE)}" y2="${Y(BASE)}" stroke="#475569" stroke-dasharray="4"/>
+    <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="${pts.map((p,i)=>X(i)+','+Y(p.y)).join(' ')}"/>
+    ${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.y)}" r="3.5" fill="#60a5fa"><title>${p.x}: ${f2(p.y)}</title></circle>`).join('')}
+    <text x="${P}" y="14" fill="#94a3b8" font-size="10">${f1(mx)}</text><text x="${P}" y="${H-6}" fill="#94a3b8" font-size="10">${f1(mn)}</text>
+   </svg>`;
+}
 
-        let teamData = {};
-        let activeWeek = 1;
+/* ======================== DEMO DATA (synthetic) ======================== */
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function loadDemo(){
+  const rnd=mulberry(2026);
+  const gauss=()=>{ let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+  const q={}; TEAMS.forEach(t=>q[t.id]={o:gauss(),d:gauss()});
+  const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const box=(off,def,home)=>{
+    const tot=Math.round(340+35*off.o-25*def.d+gauss()*45+(home?8:0));
+    const plays=Math.round(62+gauss()*5), pass=Math.round(tot*clamp(0.62+gauss()*0.06,0.45,0.8));
+    const a3=Math.max(6,Math.round(12+gauss()*2)), m3=Math.round(a3*clamp(0.40+0.04*off.o-0.03*def.d+gauss()*0.08,0.1,0.7));
+    const a4=Math.max(0,Math.round(1.5+gauss())), m4=Math.min(a4,Math.round(a4*0.5+gauss()*0.5));
+    const to=Math.max(0,Math.round(1.3-0.2*off.o+0.2*def.d+gauss()));
+    const fg=Math.max(0,Math.round(1.6+gauss()*0.9)), rzt=Math.max(1,Math.round(3.2+gauss()*1)), rztd=Math.min(rzt,Math.max(0,Math.round(rzt*clamp(0.55+0.06*off.o+gauss()*0.15,0,1))));
+    const score=Math.max(0,Math.round(clamp(tot*0.058-to*1.6+fg*0.6+gauss()*4.5,0,52)));
+    return {tot,pass,rush:tot-pass,plays,fd:Math.round(tot/16.5+gauss()*2),td3a:a3,td3m:m3,td4a:a4,td4m:m4,to,top:null,tkl:Math.round(60+gauss()*6),fg,rzt,rztd,score};
+  };
+  S.games=[]; S.nextId=1;
+  const pair=(week,teams,played)=>{
+    for(let i=0;i+1<teams.length;i+=2){
+      const h=teams[i], a=teams[i+1];
+      const g={id:S.nextId++,week,home:h,away:a,played:false};
+      if(played){
+        const hb=box(q[h],q[a],true), ab=box(q[a],q[h],false);
+        const t=30+(hb.plays-ab.plays)*0.25+gauss()*1.5, tc=clamp(t,24,36);
+        hb.top=fmtTop(tc); ab.top=fmtTop(60-tc);
+        g.hs=hb.score; g.as=ab.score; delete hb.score; delete ab.score;
+        g.hb=hb; g.ab=ab; g.played=true;
+      }
+      S.games.push(g);
+    }
+  };
+  for(let w=1;w<=4;w++) pair(w,shuffle(TEAMS.map(t=>t.id)),true);
+  for(let w=5;w<=6;w++) pair(w,shuffle(TEAMS.map(t=>t.id)).slice(0,28),false);
+  S.weights=defaultWeights();
+  save(); refresh();
+}
 
-        function resetTeamData() {
-            teamData = {};
-        }
+/* ======================== WIRING ======================== */
+function refresh(){
+  compute();
+  const played=S.games.filter(g=>g.played).length, up=S.games.length-played;
+  $('dataStatus').innerHTML = S.games.length? `<b>${played}</b> games processed · <b>${up}</b> upcoming` : 'No data loaded — click “Load demo data”, import JSON, or add fixtures.';
+  renderWeekSelect(); renderFixtures(); renderCustom(); renderSimSelect();
+  renderLeaderboard(); initHistFilters(); renderHistory();
+}
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(el=>el.classList.add('hidden'));
+  $('tab-'+id).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+}
 
-        function initTeam(abbr) {
-            if (!teamData[abbr]) {
-                teamData[abbr] = { overall: 1500, off: 1500, def: 1500, home: 1500, away: 1500, logo: '' };
-            }
-        }
-
-        async function syncFullSeasonData() {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = "Processing season (Weeks 1 to 18)...";
-            
-            resetTeamData();
-            let totalGamesProcessed = 0;
-            let detectedActiveWeek = 1;
-
-            try {
-                // Fetch weeks 1 to 18 sequentially
-                for (let week = 1; week <= 18; week++) {
-                    statusEl.innerText = `Analyzing Week ${week} boxscores...`;
-                    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`);
-                    const data = await res.json();
-
-                    if (data.events) {
-                        let weekCompletedCount = 0;
-                        data.events.forEach(event => {
-                            const comp = event.competitions[0];
-                            const home = comp.competitors.find(c => c.homeAway === 'home');
-                            const away = comp.competitors.find(c => c.homeAway === 'away');
-
-                            // Store logos for display
-                            initTeam(home.team.abbreviation);
-                            initTeam(away.team.abbreviation);
-                            teamData[home.team.abbreviation].logo = home.team.logo;
-                            teamData[away.team.abbreviation].logo = away.team.logo;
-
-                            if (comp.status.type.completed) {
-                                processGame(home, away);
-                                totalGamesProcessed++;
-                                weekCompletedCount++;
-                            }
-                        });
-
-                        // Set active week to the first week that still has uncompleted games
-                        if (weekCompletedCount === data.events.length && week < 18) {
-                            detectedActiveWeek = week + 1;
-                        }
-                    }
-                }
-
-                activeWeek = detectedActiveWeek;
-                localStorage.setItem('nfl_elo_data', JSON.stringify(teamData));
-                localStorage.setItem('nfl_active_week', activeWeek);
-
-                renderTable();
-                await fetchUpcomingSchedule(activeWeek);
-
-                statusEl.innerText = `Updated! ${totalGamesProcessed} completed games processed. Showing Week ${activeWeek}.`;
-            } catch (err) {
-                statusEl.innerText = "Error syncing season data.";
-                console.error(err);
-            }
-        }
-
-        function processGame(home, away) {
-            const hAbbr = home.team.abbreviation;
-            const aAbbr = away.team.abbreviation;
-
-            const hScore = parseInt(home.score);
-            const aScore = parseInt(away.score);
-
-            // Fetch Yards safely from stats array
-            const hYards = parseInt(home.statistics?.find(s => s.name === 'totalYards')?.displayValue || 330);
-            const aYards = parseInt(away.statistics?.find(s => s.name === 'totalYards')?.displayValue || 330);
-
-            // 1. Overall Elo Update
-            const hElo = teamData[hAbbr].overall;
-            const aElo = teamData[aAbbr].overall;
-            const eHome = 1 / (1 + Math.pow(10, (aElo - (hElo + HFA)) / 400));
-            const actualHome = hScore > aScore ? 1 : (hScore === aScore ? 0.5 : 0);
-
-            const mov = Math.abs(hScore - aScore);
-            const movMult = Math.log(mov + 1) * (2.2 / ((actualHome === 1 ? hElo - aElo : aElo - hElo) * 0.001 + 2.2));
-
-            teamData[hAbbr].overall = Math.round(hElo + K_OVERALL * movMult * (actualHome - eHome));
-            teamData[aAbbr].overall = Math.round(aElo + K_OVERALL * movMult * ((1 - actualHome) - (1 - eHome)));
-
-            // 2. Offense & Defense Rating Splits
-            const yardDiff = hYards - aYards;
-            teamData[hAbbr].off += Math.round(K_STAT * (yardDiff / 100));
-            teamData[aAbbr].def -= Math.round(K_STAT * (yardDiff / 100));
-
-            // 3. Home vs Away Splits
-            if (actualHome === 1) {
-                teamData[hAbbr].home += 10;
-                teamData[aAbbr].away -= 10;
-            } else if (actualHome === 0) {
-                teamData[hAbbr].home -= 10;
-                teamData[aAbbr].away += 10;
-            }
-        }
-
-        async function fetchUpcomingSchedule(week) {
-            const container = document.getElementById('gamesContainer');
-            document.getElementById('weekHeader').innerText = `Week ${week} Matchup Predictions`;
-            container.innerHTML = 'Loading upcoming matchups...';
-
-            try {
-                const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`);
-                const data = await res.json();
-                container.innerHTML = '';
-
-                data.events.forEach(event => {
-                    const comp = event.competitions[0];
-                    const home = comp.competitors.find(c => c.homeAway === 'home');
-                    const away = comp.competitors.find(c => c.homeAway === 'away');
-
-                    const gameDate = new Date(event.date).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-                    renderMatchupCard(home, away, gameDate, comp.status.type.completed, container);
-                });
-            } catch (err) {
-                container.innerHTML = 'Error loading schedule.';
-                console.error(err);
-            }
-        }
-
-        function renderMatchupCard(home, away, dateStr, isCompleted, container) {
-            const hAbbr = home.team.abbreviation;
-            const aAbbr = away.team.abbreviation;
-
-            initTeam(hAbbr);
-            initTeam(aAbbr);
-
-            const hData = teamData[hAbbr];
-            const aData = teamData[aAbbr];
-
-            // 1. Elo Calculation Logic
-            const eloDiff = (hData.off - aData.def) + (hData.def - aData.off) + HFA;
-            const hWinProb = (1 / (1 + Math.pow(10, -eloDiff / 400)) * 100).toFixed(1);
-            const aWinProb = (100 - hWinProb).toFixed(1);
-            const spread = (eloDiff / 25).toFixed(1);
-
-            let favorite = eloDiff > 0 ? hAbbr : aAbbr;
-            let absSpread = Math.abs(spread);
-
-            // 2. Predicted Matchup Stats Logic
-            const projTotalPoints = Math.round(45.0 + 0.02 * (hData.off + aData.off - 3000));
-            const projHScore = Math.round((projTotalPoints / 2) + (parseFloat(spread) / 2));
-            const projAScore = Math.round((projTotalPoints / 2) - (parseFloat(spread) / 2));
-
-            const projHYards = Math.round(330 + (hData.off - aData.def) * 0.8);
-            const projAYards = Math.round(330 + (aData.off - hData.def) * 0.8);
-
-            const projHYPP = (projHYards / 63).toFixed(1);
-            const projAYPP = (projAYards / 63).toFixed(1);
-
-            const projHTO = (1.25 - (hData.def - 1500) / 400).toFixed(1);
-            const projATO = (1.25 - (aData.def - 1500) / 400).toFixed(1);
-
-            const html = `
-                <div class="matchup-card">
-                    <div class="matchup-header">
-                        <span>${dateStr}</span>
-                        <span>${isCompleted ? 'FINAL' : 'UPCOMING'}</span>
-                    </div>
-
-                    <div class="teams-container">
-                        <!-- Home Team -->
-                        <div class="team-box">
-                            <img src="${hData.logo || home.team.logo}" class="team-logo" alt="${hAbbr}">
-                            <span class="team-name">${hAbbr} (H)</span>
-                            <span class="team-prob" style="color: var(--home-color);">${hWinProb}%</span>
-                        </div>
-
-                        <div class="vs-box">VS</div>
-
-                        <!-- Away Team -->
-                        <div class="team-box">
-                            <img src="${aData.logo || away.team.logo}" class="team-logo" alt="${aAbbr}">
-                            <span class="team-name">${aAbbr}</span>
-                            <span class="team-prob" style="color: var(--away-color);">${aWinProb}%</span>
-                        </div>
-                    </div>
-
-                    <!-- Visual Win Prob Bar -->
-                    <div class="spread-bar">
-                        <div class="home-bar" style="width: ${hWinProb}%;"></div>
-                        <div class="away-bar" style="width: ${aWinProb}%;"></div>
-                    </div>
-
-                    <div class="spread-text">
-                        Projected Line: ${favorite} -${absSpread}
-                    </div>
-
-                    <!-- Stat Predictions Drawer -->
-                    <details>
-                        <summary>Predicted Stats & Matchup Breakdown</summary>
-                        <table class="stats-table">
-                            <thead>
-                                <tr>
-                                    <th>${hAbbr}</th>
-                                    <th>Metric</th>
-                                    <th>${aAbbr}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><b>${projHScore}</b></td>
-                                    <td>Projected Score</td>
-                                    <td><b>${projAScore}</b></td>
-                                </tr>
-                                <tr>
-                                    <td>${projHYards}</td>
-                                    <td>Total Yards</td>
-                                    <td>${projAYards}</td>
-                                </tr>
-                                <tr>
-                                    <td>${projHYPP}</td>
-                                    <td>Yards Per Play</td>
-                                    <td>${projAYPP}</td>
-                                </tr>
-                                <tr>
-                                    <td>${projHTO}</td>
-                                    <td>Turnovers</td>
-                                    <td>${projATO}</td>
-                                </tr>
-                                <tr>
-                                    <td>${hData.off}</td>
-                                    <td>Offensive Elo</td>
-                                    <td>${aData.off}</td>
-                                </tr>
-                                <tr>
-                                    <td>${hData.def}</td>
-                                    <td>Defensive Elo</td>
-                                    <td>${aData.def}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </details>
-                </div>
-            `;
-
-            container.innerHTML += html;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('eloBody');
-            tbody.innerHTML = '';
-            
-            const sortedTeams = Object.keys(teamData).sort((a,b) => teamData[b].overall - teamData[a].overall);
-
-            sortedTeams.forEach(team => {
-                const d = teamData[team];
-                tbody.innerHTML += `<tr>
-                    <td>${team}</td>
-                    <td><b>${d.overall}</b></td>
-                    <td>${d.off}</td>
-                    <td>${d.def}</td>
-                    <td>${d.home}</td>
-                    <td>${d.away}</td>
-                </tr>`;
-            });
-        }
-
-        // Initialize state on boot
-        let storedData = localStorage.getItem('nfl_elo_data');
-        let storedWeek = localStorage.getItem('nfl_active_week');
-
-        if (storedData) {
-            teamData = JSON.parse(storedData);
-            activeWeek = parseInt(storedWeek) || 1;
-            renderTable();
-            fetchUpcomingSchedule(activeWeek);
-        }
-    </script>
+window.addEventListener('DOMContentLoaded',()=>{
+  load();
+  ['cAway','cHome','aAway','aHome'].forEach((id,i)=>{ $(id).innerHTML=tOpts(TEAMS[i%2?1:0].id); });
+  $('cAway').value='KC'; $('cHome').value='BUF'; $('aAway').value='KC'; $('aHome').value='BUF';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+  $('btnDemo').onclick=()=>{ if(S.games.length&&!confirm('Replace current data with synthetic demo data?')) return; loadDemo(); };
+  $('btnClear').onclick=()=>{ if(confirm('Delete all games?')){ S.games=[]; S.nextId=1; save(); refresh(); } };
+  $('btnExport').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'})); a.download='nfl-2026-elo-data.json'; a.click(); };
+  $('fileImport').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(!Array.isArray(o.games)) throw 0; S=Object.assign(S,o); S.weights=Object.assign(defaultWeights(),S.weights||{}); S.nextId=Math.max(S.nextId||1,...S.games.map(g=>g.id+1),1); save(); renderWeights(); refresh(); }catch(_){ alert('Invalid JSON file.'); } }; r.readAsText(f); };
+  $('btnResetW').onclick=()=>{ S.weights=defaultWeights(); S.hfa=2; S.sigma=13.5; save(); renderWeights(); renderFixtures(); renderCustom(); };
+  $('hfa').onchange=()=>{ S.hfa=+$('hfa').value||0; save(); renderFixtures(); renderCustom(); };
+  $('sigma').onchange=()=>{ S.sigma=Math.max(1,+$('sigma').value||13.5); save(); renderFixtures(); renderCustom(); };
+  $('rawMode').onchange=()=>{ S.raw=$('rawMode').checked; save(); refresh(); };
+  $('predWeek').onchange=renderFixtures;
+  $('btnCustom').onclick=renderCustom;
+  $('cHome').onchange=$('cAway').onchange=renderCustom;
+  $('simGame').onchange=renderSimForm;
+  $('btnAddFx').onclick=()=>{ const h=$('aHome').value,a=$('aAway').value,w=+$('aWeek').value; if(h===a||!w) return alert('Pick two different teams and a week.'); S.games.push({id:S.nextId++,week:w,home:h,away:a,played:false}); save(); refresh(); };
+  ['hWeek','hTeam','hStat'].forEach(id=>$(id).onchange=renderHistory);
+  renderWeights(); renderPills(); showTab('pred'); refresh();
+});
+</script>
 </body>
 </html>
